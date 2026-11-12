@@ -1,6 +1,10 @@
 # 本機 AI 連線設定（含 Mac mini 位址），只留在自己電腦，不上傳
 config.local.js
 
+# 原始講義（著作權屬於授課老師），不上傳到公開儲存庫
+sources/
+*.pdf
+
 # 系統與編輯器產生的檔案
 .DS_Store
 Thumbs.db

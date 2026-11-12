@@ -433,6 +433,20 @@
       <p>從傳統理性代理談到 LLM 代理的規劃、記憶、工具使用、多代理協作、評估方法與安全風險。</p>
       <div class="card-meta">2026-11-10 · 約 25 分鐘閱讀</div>
     </a>
+    <!-- 已發佈的筆記頁（notes/<課程>/<檔名>.html）：新增時依 CLAUDE.md「首頁卡片格式」複製這張卡片 -->
+    <a class="card pub" href="notes/database/ch03-relational-database.html" data-id="pub-database-ch03"
+       data-course="資料庫系統" data-topics="6" data-terms="24" data-quiz="10"
+       data-keywords="關聯式資料庫 鍵值屬性 屬性 簡單屬性 複合屬性 衍生屬性 超鍵 主鍵 複合鍵 候選鍵 外鍵 一對一 一對多 多對多 實體完整性 參考完整性 值域完整性 空值 非空值 null not null 資料定義語言 ddl sql 資料庫管理師 唯一鍵 值域">
+      <div class="card-icon" aria-hidden="true">🗄️</div>
+      <div class="tags">
+        <span class="tag purple">資料庫系統</span>
+        <span class="tag yellow">本機 AI 生成</span>
+        <span class="tag green">已校對</span>
+      </div>
+      <h3>資料庫系統 CH3：關聯式資料庫</h3>
+      <p>關聯式資料庫的定義、鍵值屬性（超鍵、候選鍵、主鍵、外鍵）、三種關聯類型與資料完整性規則，附 SQL Server 範例。</p>
+      <div class="card-meta">2026-11-11 · gemma3:12b · 6 節 · 24 個名詞 · 10 題測驗</div>
+    </a>
     <button type="button" class="card placeholder" id="add-note-btn" aria-haspopup="dialog">
       <div class="card-icon" aria-hidden="true">＋</div>
       <p>上傳 PDF / 圖片<br>自動生成新筆記</p>
@@ -2845,7 +2859,13 @@ Action:  finish("John Hopfield 與 Geoffrey Hinton")</code></pre>
       terms += c.querySelectorAll('dt').length;
       quiz += c.querySelectorAll('.q').length || c.querySelectorAll('details').length;
     });
-    $('stat-notes').textContent = 1 + notes.length;
+    var pubs = document.querySelectorAll('#cards a.card.pub');
+    pubs.forEach(function (a) {
+      topics += parseInt(a.dataset.topics, 10) || 0;
+      terms += parseInt(a.dataset.terms, 10) || 0;
+      quiz += parseInt(a.dataset.quiz, 10) || 0;
+    });
+    $('stat-notes').textContent = 1 + pubs.length + notes.length;
     $('stat-topics').textContent = topics;
     $('stat-terms').textContent = terms;
     $('stat-quiz').textContent = quiz;
@@ -3251,6 +3271,7 @@ Action:  finish("John Hopfield 與 Geoffrey Hinton")</code></pre>
   var activeCourse = '';            // '' = 全部，'__none' = 未分類
   function allCourses() {
     var set = {}; set[STATIC_COURSE] = 1;
+    document.querySelectorAll('#cards a.card.pub[data-course]').forEach(function (a) { if (a.dataset.course) set[a.dataset.course] = 1; });
     getNotes().forEach(function (n) { if (n.course) set[n.course] = 1; });
     return Object.keys(set);
   }
@@ -3290,7 +3311,11 @@ Action:  finish("John Hopfield 與 Geoffrey Hinton")</code></pre>
       total++;
       var course = a.dataset.course || '';
       var okCourse = !activeCourse || (activeCourse === '__none' ? !course : course === activeCourse);
-      var okText = !terms.length || (function () { var t = searchText(a.dataset.id); return terms.every(function (w) { return t.indexOf(w) >= 0; }); })();
+      var okText = !terms.length || (function () {
+        // 已發佈的筆記頁：用卡片上的關鍵字與文字搜尋（內文在另一個檔案）
+        var t = a.dataset.keywords ? (a.dataset.keywords + ' ' + a.textContent).toLowerCase() : searchText(a.dataset.id);
+        return terms.every(function (w) { return t.indexOf(w) >= 0; });
+      })();
       a.hidden = !(okCourse && okText);
       if (!a.hidden) shown++;
     });

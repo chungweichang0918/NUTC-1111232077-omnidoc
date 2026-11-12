@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>資料庫系統 CH3：關聯式資料庫 · OmniDoc 知識煉金庫</title>
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --text: #2F3437;
+    --muted: #787774;
+    --faint: #9B9A97;
+    --border: #E9E9E7;
+    --soft: #F7F6F3;
+    --callout: #F1F1EF;
+    --accent: #2383E2;
+    --accent-soft: #E7F3FF;
+    --tag-blue: #D3E5EF;
+    --tag-green: #DBEDDB;
+    --tag-yellow: #FDECC8;
+    --tag-red: #FFE2DD;
+    --tag-purple: #E8DEEE;
+    --code-bg: #F3F2EF;
+    --code-text: #EB5757;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+  }
+  .container { max-width: 850px; margin: 0 auto; padding: 0 16px; }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: saturate(180%) blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar .container { display: flex; align-items: center; justify-content: space-between; height: 48px; gap: 12px; }
+  .brand { font-weight: 600; font-size: 15px; color: var(--text); text-decoration: none; white-space: nowrap; }
+  .brand span { color: var(--muted); font-weight: 400; }
+  .topnav { display: flex; gap: 4px; font-size: 14px; }
+  .topnav a { color: var(--muted); text-decoration: none; padding: 4px 8px; border-radius: 4px; white-space: nowrap; }
+  .topnav a:hover { background: var(--soft); color: var(--text); }
+
+  /* ---------- Home ---------- */
+  .home { padding: 72px 0 40px; }
+  .home .icon { font-size: 56px; line-height: 1; margin-bottom: 12px; }
+  .home h1 { font-size: 40px; line-height: 1.2; margin: 0 0 12px; font-weight: 700; letter-spacing: -0.01em; }
+  .home .lead { color: var(--muted); font-size: 17px; margin: 0 0 32px; max-width: 640px; }
+  .home-stats { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 40px; font-size: 14px; color: var(--muted); }
+  .home-stats strong { display: block; font-size: 22px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .section-label { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 12px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+  .card {
+    display: block; border: 1px solid var(--border); border-radius: 8px; padding: 18px 18px 16px;
+    color: var(--text); text-decoration: none; background: var(--bg);
+    transition: background .15s, box-shadow .15s, transform .15s;
+  }
+  a.card:hover { background: var(--soft); box-shadow: 0 2px 8px rgba(15,15,15,0.06); transform: translateY(-1px); }
+  .card .card-icon { font-size: 26px; line-height: 1; margin-bottom: 10px; }
+  .card h3 { margin: 0 0 6px; font-size: 16px; line-height: 1.4; }
+  .card p { margin: 0 0 12px; font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .card .card-meta { font-size: 12px; color: var(--faint); }
+  .card.placeholder { border-style: dashed; color: var(--faint); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 180px; }
+  .card.placeholder p { color: var(--faint); margin: 0; }
+  button.card { font: inherit; width: 100%; cursor: pointer; }
+  button.card.placeholder:hover { background: var(--soft); color: var(--muted); border-color: var(--faint); }
+  button.card.placeholder:hover p { color: var(--muted); }
+  button.card:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .card.gen .card-icon { font-size: 24px; }
+
+  /* ---------- Generate dialog ---------- */
+  dialog {
+    border: 1px solid var(--border); border-radius: 10px; padding: 24px 28px;
+    max-width: 680px; width: calc(100% - 32px); max-height: calc(100vh - 32px); overflow-y: auto;
+    color: var(--text); background: var(--bg);
+    box-shadow: 0 12px 40px rgba(15,15,15,0.18);
+  }
+  dialog::backdrop { background: rgba(15,15,15,0.35); }
+  dialog h3 { margin: 0 0 4px; }
+  .gen-sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+  .dropzone {
+    display: block; border: 2px dashed var(--border); border-radius: 8px; padding: 22px 16px;
+    text-align: center; color: var(--muted); cursor: pointer; font-size: 15px; transition: background .15s, border-color .15s;
+  }
+  .dropzone:hover { background: var(--soft); }
+  .dropzone.drag { border-color: var(--accent); background: var(--accent-soft); }
+  .dropzone .dz-icon { display: block; font-size: 28px; margin-bottom: 4px; }
+  .dropzone strong { color: var(--accent); }
+  .file-list { list-style: none; padding: 0; margin: 10px 0 4px; font-size: 14px; }
+  .file-list li { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 4px; margin: 0; }
+  .file-list li:hover { background: var(--soft); }
+  .file-list .fname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-list .fsize { color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .icon-btn { border: none; background: none; cursor: pointer; color: var(--faint); font-size: 15px; padding: 0 4px; border-radius: 4px; }
+  .icon-btn:hover { color: var(--text); background: var(--border); }
+  .field { margin: 12px 0 0; }
+  .field label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 4px; }
+  .field input[type=text], .field input[type=url], .field input[type=password], .field input[type=number], .field select, .field textarea {
+    width: 100%; font: inherit; font-size: 14px; color: var(--text); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px;
+  }
+  .field textarea { resize: vertical; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  .field.check label { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 400; font-size: 14px; cursor: pointer; }
+  .field .hint { font-size: 12px; color: var(--faint); margin-top: 3px; }
+  details.settings { border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin: 16px 0 0; }
+  details.settings > summary { color: var(--text); font-weight: 500; }
+  details.settings[open] > summary { margin-bottom: 4px; }
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  .settings-grid .full { grid-column: 1 / -1; }
+  .settings-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 14px 0 6px; font-size: 13px; }
+  .conn-badge { font-size: 12px; font-weight: 400; padding: 1px 8px; border-radius: 10px; background: var(--tag-red); margin-left: 6px; }
+  .conn-badge.ok { background: var(--tag-green); }
+  .msg-ok { color: #0F7B6C; }
+  .msg-err { color: #E03E3E; }
+  details.help { border-top: 1px dashed var(--border); margin-top: 10px; padding-top: 8px; font-size: 14px; }
+  details.help > summary { font-size: 14px; }
+  details.help h4 { margin: 12px 0 4px; font-size: 14px; }
+  details.help pre { font-size: 12.5px; padding: 10px 12px; margin: 6px 0 10px; }
+  details.help ol, details.help ul { margin: 4px 0 8px; }
+  .gen-progress { margin: 16px 0 0; border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; background: var(--soft); }
+  .gen-log { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+  .gen-log li { margin: 2px 0; }
+  .gen-log li.warn { color: #9F6B00; }
+  .gen-log li.error { color: #E03E3E; white-space: pre-wrap; }
+  .gen-log li.done { color: #0F7B6C; font-weight: 500; }
+  pre.stream { max-height: 150px; overflow-y: auto; background: var(--bg); border: 1px solid var(--border); font-size: 12px; margin: 10px 0 0; white-space: pre-wrap; word-break: break-all; }
+  .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+  .btn {
+    font: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+    background: var(--accent); color: #fff; border: 1px solid var(--accent); border-radius: 6px; padding: 7px 16px;
+  }
+  .btn:hover { background: #0B6BCB; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.secondary { background: var(--bg); color: var(--text); border-color: var(--border); }
+  .btn.secondary:hover { background: var(--soft); }
+  .btn.danger { background: var(--bg); color: #E03E3E; border-color: #F5C6C6; }
+  .btn.danger:hover { background: #FDEBEC; }
+
+  /* ---------- Generated note viewer ---------- */
+  #viewer { scroll-margin-top: 56px; padding-bottom: 96px; }
+  .viewer-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 auto 24px; }
+  .viewer-bar .spacer { flex: 1; }
+  .viewer-bar a { font-size: 14px; color: var(--muted); text-decoration: none; }
+  .viewer-bar a:hover { color: var(--text); }
+  .gen-badge { display: inline-block; font-size: 12px; background: var(--tag-yellow); padding: 0 6px; border-radius: 3px; }
+
+  /* ---------- 筆記庫工具列：搜尋、課程篩選、錯題本、備份 ---------- */
+  .lib-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 10px; }
+  .lib-tools input[type=search] {
+    flex: 1 1 240px; min-width: 0; font: inherit; font-size: 14px; color: var(--text); background: var(--bg);
+    padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+  }
+  .lib-tools input[type=search]:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; }
+  .chip { font: inherit; font-size: 13px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); border-radius: 14px; padding: 2px 11px; cursor: pointer; }
+  .chip:hover { background: var(--soft); color: var(--text); }
+  .chip.on { background: var(--text); color: #fff; border-color: var(--text); }
+  .btn.sm { font-size: 13px; padding: 4px 10px; }
+  .card[hidden] { display: none; }
+  #wrong-count { color: #E03E3E; font-weight: 600; }
+
+  /* ---------- 編輯模式 ---------- */
+  #viewer-body[contenteditable="true"] { outline: 2px dashed var(--accent); outline-offset: 10px; border-radius: 4px; }
+  .edit-bar { background: var(--accent-soft); border-radius: 8px; padding: 8px 12px; position: sticky; top: 56px; z-index: 5; font-size: 14px; }
+  .edit-bar .hint { font-size: 12px; color: var(--muted); }
+  .edit-bar input { font: inherit; font-size: 13px; padding: 3px 8px; border: 1px solid var(--border); border-radius: 6px; width: 140px; }
+  .regen-btn {
+    font: inherit; font-size: 12px; font-weight: 400; margin-left: 10px; vertical-align: middle; cursor: pointer;
+    border: 1px solid var(--border); background: var(--bg); color: var(--muted); border-radius: 12px; padding: 1px 9px;
+  }
+  .regen-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---------- 互動測驗 ---------- */
+  .quiz-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; background: var(--soft); border-radius: 8px; padding: 10px 14px; margin: 12px 0; font-size: 14px; }
+  .quiz-bar .hint { font-size: 12px; color: var(--faint); flex: 1 1 260px; }
+  .q.mc > ul { list-style: none; padding-left: 0; margin: 8px 0 12px; }
+  .q.mc > ul > li { border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; margin: 6px 0; cursor: pointer; transition: background .12s, border-color .12s; }
+  .q.mc > ul > li:hover { background: var(--soft); }
+  .q.mc > ul > li:focus-visible { outline: 2px solid var(--accent); }
+  .q.mc.done > ul > li { cursor: default; }
+  .q.mc > ul > li.correct { background: #DBEDDB; border-color: #6FB67A; }
+  .q.mc > ul > li.wrong { background: #FFE2DD; border-color: #E8877A; }
+  .q.mc > ul > li.picked { font-weight: 600; }
+  .q.done.ok { border-color: #6FB67A; }
+  .q.done.bad { border-color: #E8877A; }
+  .q-status { float: right; font-size: 12px; padding: 0 8px; border-radius: 10px; margin-left: 8px; }
+  .q-status.ok { background: var(--tag-green); }
+  .q-status.bad { background: var(--tag-red); }
+  .self-check { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); font-size: 14px; }
+  #wrongbook { scroll-margin-top: 56px; padding-bottom: 96px; }
+  #wrongbook h2 a { color: var(--text); text-decoration: none; }
+  #wrongbook h2 a:hover { text-decoration: underline; }
+
+  /* ---------- 名詞閃卡 ---------- */
+  dialog.flash { max-width: 560px; }
+  .flash-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .flash-top strong { flex: 1; min-width: 0; }
+  #flash-progress, #ask-sub { font-size: 13px; color: var(--muted); }
+  .flash-card {
+    min-height: 230px; border: 1px solid var(--border); border-radius: 12px; padding: 24px; cursor: pointer;
+    display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+    background: var(--soft); box-shadow: 0 2px 8px rgba(15,15,15,.06); user-select: none;
+  }
+  .flash-card.flipped { background: var(--bg); }
+  .flash-card:focus-visible { outline: 2px solid var(--accent); }
+  .flash-term { font-size: 28px; font-weight: 700; line-height: 1.3; }
+  .flash-en { color: var(--muted); margin-top: 4px; }
+  .flash-level { margin-top: 12px; color: #D9A400; font-size: 14px; letter-spacing: 2px; }
+  .flash-back { margin-top: 14px; font-size: 16px; text-align: left; border-top: 1px dashed var(--border); padding-top: 12px; width: 100%; }
+  .flash-hint { margin-top: 14px; font-size: 12px; color: var(--faint); }
+  .flash-actions { display: flex; justify-content: center; gap: 12px; margin-top: 16px; }
+  #flash-done { text-align: center; font-size: 16px; }
+
+  /* ---------- 對筆記提問 ---------- */
+  dialog.ask { max-width: 720px; }
+  .ask-log { max-height: 55vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+  .ask-log:empty::before { content: "可以問這份筆記的任何內容，例如「請用例子說明參考完整性」。AI 會根據這份筆記回答。"; color: var(--faint); font-size: 14px; }
+  .bubble { padding: 10px 14px; border-radius: 10px; font-size: 15px; line-height: 1.65; overflow-wrap: anywhere; }
+  .bubble.user { align-self: flex-end; background: var(--accent-soft); max-width: 85%; white-space: pre-wrap; }
+  .bubble.bot { align-self: flex-start; background: var(--soft); max-width: 95%; }
+  .bubble.bot ul { margin: 4px 0; }
+  .ask-form { display: flex; gap: 8px; align-items: flex-end; }
+  .ask-form textarea { flex: 1; min-width: 0; font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; resize: vertical; }
+
+  @media (max-width: 640px) {
+    dialog { padding: 20px 16px; }
+    .settings-grid { grid-template-columns: 1fr; }
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .tag { font-size: 12px; padding: 0 6px; border-radius: 3px; line-height: 20px; color: var(--text); }
+  .tag.blue { background: var(--tag-blue); }
+  .tag.green { background: var(--tag-green); }
+  .tag.yellow { background: var(--tag-yellow); }
+  .tag.red { background: var(--tag-red); }
+  .tag.purple { background: var(--tag-purple); }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 56px 0; }
+
+  /* ---------- Note article ---------- */
+  article { padding-bottom: 96px; }
+  .breadcrumb { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+  .breadcrumb a { color: var(--muted); text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
+  article > header h1 { font-size: 34px; line-height: 1.25; margin: 0 0 16px; font-weight: 700; letter-spacing: -0.01em; }
+  .props { display: grid; grid-template-columns: 110px 1fr; gap: 6px 12px; font-size: 14px; margin: 0 0 28px; }
+  .props .k { color: var(--muted); }
+  .props .v { color: var(--text); }
+  .sources { margin: 0; padding-left: 20px; font-size: 14px; }
+  .sources li { margin: 2px 0; }
+  .sources .note { list-style: none; margin-left: -20px; color: var(--muted); font-size: 13px; margin-top: 8px; }
+
+  h2 {
+    font-size: 26px; line-height: 1.3; margin: 56px 0 12px; font-weight: 700;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    scroll-margin-top: 64px;
+  }
+  h3 { font-size: 19px; line-height: 1.4; margin: 32px 0 8px; font-weight: 600; scroll-margin-top: 64px; }
+  h4 { font-size: 16px; margin: 20px 0 4px; font-weight: 600; }
+  p { margin: 8px 0 14px; }
+  ul, ol { margin: 6px 0 16px; padding-left: 26px; }
+  li { margin: 4px 0; }
+  li > ul, li > ol { margin: 4px 0 6px; }
+  strong { font-weight: 600; }
+  a { color: var(--accent); }
+  code {
+    font-family: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.86em; background: var(--code-bg); color: var(--code-text);
+    padding: 2px 5px; border-radius: 4px;
+  }
+  pre {
+    background: var(--soft); border-radius: 6px; padding: 16px 18px; overflow-x: auto;
+    font-size: 13.5px; line-height: 1.6; margin: 12px 0 20px;
+  }
+  pre code { background: none; color: var(--text); padding: 0; font-size: inherit; }
+  blockquote {
+    margin: 16px 0 20px; padding: 2px 0 2px 16px;
+    border-left: 3px solid var(--text); color: var(--text);
+  }
+  blockquote p { margin: 6px 0; }
+  blockquote cite { display: block; font-size: 13px; color: var(--muted); font-style: normal; margin-top: 4px; }
+
+  .callout {
+    display: flex; gap: 12px; background: var(--callout); border-radius: 6px;
+    padding: 18px 20px; margin: 8px 0 28px;
+  }
+  .callout .callout-icon { font-size: 22px; line-height: 1.4; flex-shrink: 0; }
+  .callout .callout-body { min-width: 0; }
+  .callout .callout-title { font-weight: 600; margin: 0 0 6px; }
+  .callout p { margin: 0 0 8px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout.info { background: var(--accent-soft); }
+  .callout.warn { background: #FBF3DB; }
+
+  /* TOC */
+  .toc { border: 1px solid var(--border); border-radius: 6px; padding: 14px 20px; margin: 0 0 12px; background: var(--bg); }
+  .toc-title { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 0 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .toc ol { margin: 0; padding-left: 22px; columns: 2; column-gap: 32px; font-size: 14.5px; }
+  .toc li { margin: 2px 0; break-inside: avoid; }
+  .toc a { color: var(--text); text-decoration: none; border-bottom: 1px solid transparent; }
+  .toc a:hover { border-bottom-color: var(--faint); }
+  .toc .sub { color: var(--muted); }
+  /* AI 生成的筆記：h2 本身已有「1.」編號，目錄不再自動加號碼 */
+  .toc ol.plain, #viewer-body .toc ol { list-style: none; padding-left: 0; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; margin: 14px 0 24px; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; line-height: 1.6; }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--soft); font-weight: 600; white-space: nowrap; }
+  td:first-child { font-weight: 600; white-space: nowrap; }
+  caption { caption-side: bottom; text-align: left; font-size: 13px; color: var(--muted); padding-top: 6px; }
+
+  /* Agent loop flow */
+  .flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; margin: 16px 0 8px; }
+  .flow .step { flex: 1 1 120px; border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; background: var(--soft); font-size: 14px; line-height: 1.5; }
+  .flow .step b { display: block; font-size: 14.5px; margin-bottom: 2px; }
+  .flow .arrow { align-self: center; color: var(--faint); font-size: 18px; }
+  .flow-note { font-size: 13px; color: var(--muted); margin: 0 0 20px; }
+
+  /* Terminology */
+  dl.terms { margin: 12px 0 0; }
+  dl.terms dt { font-weight: 600; margin-top: 18px; }
+  dl.terms dt .en { font-weight: 400; color: var(--muted); font-size: 14px; margin-left: 6px; }
+  dl.terms dd { margin: 4px 0 0 0; padding-left: 16px; border-left: 2px solid var(--border); color: var(--text); }
+
+  /* Self-test */
+  .quiz { counter-reset: q; }
+  .q { border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin: 16px 0; }
+  .q .q-head { font-weight: 600; margin: 0 0 6px; }
+  .q .q-head::before { counter-increment: q; content: "Q" counter(q) "　"; color: var(--accent); }
+  .q .q-hint { font-size: 14px; color: var(--muted); margin: 0 0 10px; }
+  details { border-top: 1px dashed var(--border); padding-top: 10px; }
+  summary { cursor: pointer; color: var(--accent); font-size: 14.5px; font-weight: 500; user-select: none; }
+  summary:hover { text-decoration: underline; }
+  details[open] summary { margin-bottom: 8px; }
+  details .answer { font-size: 15px; }
+
+  footer { border-top: 1px solid var(--border); padding: 24px 0 48px; font-size: 13px; color: var(--faint); }
+  .back-top { color: var(--muted); text-decoration: none; }
+
+  @media (max-width: 640px) {
+    .home { padding: 48px 0 24px; }
+    .home h1 { font-size: 32px; }
+    article > header h1 { font-size: 27px; }
+    h2 { font-size: 22px; margin-top: 44px; }
+    .props { grid-template-columns: 1fr; gap: 0; }
+    .props .k { margin-top: 8px; }
+    .toc ol { columns: 1; }
+    .topnav a.hide-sm { display: none; }
+    .flow .arrow { display: none; }
+    .flow .step { flex-basis: 100%; }
+  }
+
+  /* ---------- Print ---------- */
+  @media print {
+    @page { margin: 18mm 16mm; }
+    body { font-size: 11pt; line-height: 1.6; color: #000; }
+    .topbar, .home, .divider, .breadcrumb, .toc, footer .back-top, summary, .viewer-bar, dialog,
+    .quiz-bar, .regen-btn, .q-status, .self-check { display: none !important; }
+    .container { max-width: none; padding: 0; }
+    a { color: #000; text-decoration: none; }
+    h2 { break-after: avoid; page-break-after: avoid; margin-top: 28px; }
+    h3, h4 { break-after: avoid; page-break-after: avoid; }
+    table, .callout, .q, blockquote, pre, .flow { break-inside: avoid; page-break-inside: avoid; }
+    .callout { border: 1px solid #ccc; }
+    .q { border-color: #ccc; }
+    details { border-top: none; padding-top: 0; }
+    details > .answer::before { content: "參考答案："; font-weight: 600; }
+    .table-wrap { overflow: visible; }
+    th { background: #f2f2f2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar"><div class="container"><a class="brand" href="../../index.html">⚗️ OmniDoc <span>知識煉金庫</span></a><nav class="topnav" aria-label="主要導覽"><a href="../../index.html#library">筆記庫</a><a href="#g-s7">名詞庫</a><a href="#g-s8">測驗</a></nav></div></div>
+<main>
+<article class="container" style="padding-top:48px">
+<header><div class="breadcrumb"><a href="../../index.html#library">知識煉金庫</a> / 資料庫系統 / CH3</div><h1>📒 資料庫系統 CH3：關聯式資料庫</h1><div class="props"><div class="k">建立日期</div><div class="v">2026-11-11</div><div class="k">課程</div><div class="v"><span class="tag purple">資料庫系統</span></div><div class="k">生成方式</div><div class="v">OmniDoc 本機 AI 生成器（gemma3:12b · 詳細模式）＋人工校對</div><div class="k">資料來源</div><div class="v"><ol class="sources"><li>ch03.pdf</li></ol></div></div></header>
+<div class="callout"><div class="callout-icon">💡</div><div class="callout-body"><p class="callout-title">核心摘要</p><p>本章探討關聯式資料庫的核心概念，包括關聯式資料庫的定義、鍵值屬性（主鍵、外鍵、候選鍵）以及關聯式資料完整性規則（實體完整性、參考完整性、值域完整性）。透過實際的SQL Server範例，說明如何建立資料表、定義關聯，並確保資料的一致性和正確性。 此外，本章也詳細解釋了空值(NULL)和非空值(NOT NULL)的概念，以及它們在資料庫設計中的應用。 總體而言，本章旨在幫助讀者理解關聯式資料庫的基本原理和實務操作。</p></div></div><nav class="toc"><p class="toc-title">目錄</p><ol class="plain"><li><a href="#g-s1">1. 關聯式資料庫(Relation Database)</a></li><li><a href="#g-s2">2. 鍵值屬性（一）：屬性、超鍵、主鍵</a></li><li><a href="#g-s3">3. 鍵值屬性（二）：複合鍵、候選鍵、外鍵</a></li><li><a href="#g-s4">4. 關聯式資料庫的種類</a></li><li><a href="#g-s5">5. 關聯式資料完整性規則（一）：實體完整性規則、參考完整性規則、值域完整性規則</a></li><li><a href="#g-s6">6. 關聯式資料完整性規則（二）：空值、非空值</a></li><li><a href="#g-s7">📖 專有名詞庫</a></li><li><a href="#g-s8">📝 複習測驗</a></li></ol></nav>
+<section class="deep-dive">
+<h2 id="g-s1">1. 關聯式資料庫(Relation Database)</h2>
+
+<h3>1.1 定義與基本概念（3-1）</h3>
+
+<p>關聯式資料庫（Relation Database）是由兩個或兩個以上的資料表組合而成，資料表之間透過相同的欄位值（即「外鍵」參考「主鍵」）來連結。簡單來說，它是一種將資料分散到多個表格中，並利用表格之間的關聯來組織資料的方式。</p>
+
+<p>與傳統的檔案系統不同，關聯式資料庫的目的是為了節省重複輸入的時間與儲存空間，並確保異動資料（新增、修改、刪除）時的一致性及完整性。例如，在「員工資料表」中，如果每個員工的部門資訊都重複儲存，會造成大量的資料重複。透過關聯式資料庫，我們可以將員工資訊和部門資訊分別儲存在不同的表格中，並利用「部碼」這個欄位將兩者連結，達到資料的一致性和節省空間的目的。</p>
+
+<p>舉例來說，我們有一個「員工資料表」和一個「部門代碼表」，員工資料表包含員工的編號、姓名和部碼，部門代碼表包含部門的部碼和部門名稱。員工資料表的「部碼」欄位是外鍵，參考部門代碼表的主鍵，表示每個員工都屬於一個部門，而部門資訊儲存在部門代碼表中。</p>
+
+<h3>1.2 關聯式資料庫的優點（3-1）</h3>
+
+<ul>
+  <li><strong>節省記憶體空間：</strong>避免資料重複儲存，減少儲存空間需求。</li>
+  <li><strong>提高行政效率：</strong>資料集中管理，方便查詢和維護。</li>
+  <li><strong>達成資料的一致性：</strong>透過關聯約束，確保資料之間的關聯正確無誤。</li>
+</ul>
+
+<h3>1.3 建立關聯式資料庫的步驟（3-2、3-3）</h3>
+
+<p>建立關聯式資料庫通常需要以下步驟：</p>
+<ol>
+  <li><strong>定義資料表結構：</strong>決定每個資料表包含哪些欄位，以及每個欄位的資料類型。</li>
+  <li><strong>定義主鍵：</strong>每個資料表都需要一個主鍵，用來唯一識別記錄。例如，在「員工資料表」中，「編號」欄位可以作為主鍵。</li>
+  <li><strong>定義外鍵：</strong>如果資料表之間存在關聯，需要定義外鍵。外鍵指向另一個資料表的主鍵，建立資料表之間的連結。例如，在「員工資料表」中，「部碼」欄位是外鍵，參考「部門代碼表」的「部碼」主鍵。</li>
+  <li><strong>使用資料定義語言 (DDL) 撰寫 SQL 指令：</strong>使用 SQL 指令來建立資料表和定義它們之間的關聯。</li>
+</ol>
+
+<p>例如，建立「ch3_DB」資料庫和兩個資料表（「員工資料表」和「部門代碼表」）的 SQL 指令如下：</p>
+
+<pre><code>
+CREATE DATABASE ch3_DB;
+
+USE ch3_DB;
+
+CREATE TABLE 部門代碼表 (
+    部碼 CHAR(4) PRIMARY KEY,
+    部碼 NVARCHAR(4) NOT NULL
+);
+
+CREATE TABLE 員工資料表 (
+    編號 CHAR(5) PRIMARY KEY,
+    姓名 NVARCHAR(4) NOT NULL,
+    部碼 CHAR(4),
+    FOREIGN KEY (部碼) REFERENCES 部門代碼表 (部碼)
+);
+</code></pre>
+
+<p>（補充：SQL Server Management Studio 是一個常用的資料庫管理工具，可以方便地撰寫和執行 SQL 指令。）</p>
+
+<h3>1.4 範例：員工資料表與部門代碼表（3-1、3-2）</h3>
+
+<p>以下是一個「員工資料表」和一個「部門代碼表」的範例：</p>
+
+<div class="table-wrap"><table>
+  <thead>
+    <tr>
+      <th>欄位</th>
+      <th>資料型別</th>
+      <th>備註</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>編號</td>
+      <td>CHAR(5)</td>
+      <td>主鍵</td>
+    </tr>
+    <tr>
+      <td>姓名</td>
+      <td>NVARCHAR(4) NOT NULL</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>部碼</td>
+      <td>CHAR(4)</td>
+      <td>外鍵，參考部門代碼表 (部碼)</td>
+    </tr>
+  </tbody>
+</table></div>
+
+<div class="table-wrap"><table>
+  <thead>
+    <tr>
+      <th>欄位</th>
+      <th>資料型別</th>
+      <th>備註</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>部碼</td>
+      <td>CHAR(4)</td>
+      <td>主鍵</td>
+    </tr>
+    <tr>
+      <td>部碼</td>
+      <td>NVARCHAR(4) NOT NULL</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table></div>
+
+<p>在這個範例中，「員工資料表」的「部碼」欄位是外鍵，它參考「部門代碼表」的「部碼」主鍵。這表示每個員工都屬於一個部門，而部門資訊儲存在「部門代碼表」中。</p>
+
+<h2 id="g-s2">2. 鍵值屬性（一）：屬性、超鍵、主鍵</h2>
+
+<p>本節將介紹關聯式資料庫中鍵值屬性的概念，包括屬性、超鍵和主鍵。理解這些概念對於設計和管理資料庫至關重要。</p>
+
+<h3>2.1 屬性 (Attribute)（3-2-1）</h3>
+
+<p><strong>屬性 (Attribute)</strong> 指的是用來描述實體的性質。換句話說，它代表了資料表中每一列的欄位，用來儲存關於實體的資訊。例如，在員工資料表中，姓名、年齡、地址等都是屬性。</p>
+
+<p>舉例來說，員工資料表包含以下屬性：</p>
+
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>編號</th>
+<th>姓名</th>
+<th>年齡</th>
+<th>地址</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S0001</td>
+<td>一心</td>
+<td>20</td>
+<td>高雄市三民區</td>
+</tr>
+<tr>
+<td>S0002</td>
+<td>二聖</td>
+<td>19</td>
+<td>高雄市前鎮區</td>
+</tr>
+<tr>
+<td>S0003</td>
+<td>三多</td>
+<td>23</td>
+<td>高雄市苓雅區</td>
+</tr>
+<tr>
+<td>S0004</td>
+<td>四維</td>
+<td>22</td>
+<td>高雄市鳥松區</td>
+</tr>
+<tr>
+<td>S0005</td>
+<td>五福</td>
+<td>24</td>
+<td>高雄市阿蓮區</td>
+</tr>
+</tbody>
+</table></div>
+
+<p><strong>簡單屬性 (Simple Attribute)</strong> 已經無法再繼續切割成其他有意義的單位。例如，「編號」屬性通常是唯一的識別碼，無法再細分。<strong>複合屬性 (Composite Attribute)</strong> 由兩個或兩個以上的其他屬性的值所組成。例如，「地址」可以拆解為「縣市」、「區」、「路」等更細的屬性。<strong>衍生屬性 (Derived Attribute)</strong> 是指可以經由某種方式的計算或推論而獲得的屬性。例如，「年齡」可以由「目前的系統時間」減去「生日」屬性的值來計算。</p>
+
+<p>公式： 年齡 = 目前的系統時間 – 生日</p>
+
+<h3>2.2 超鍵 (Super Key)（3-2-2）</h3>
+
+<p><strong>超鍵 (Super Key)</strong> 指的是在資料表中，選出兩個或兩個以上的欄位組合起來，以作為唯一識別資料的欄位。換句話說，它是一個或多個屬性的組合，可以唯一地確定資料表中的每一筆記錄。</p>
+
+<p>舉例來說，在員工資料表中，如果我們只用「年齡」來識別員工，雖然可以區分不同的員工，但因為年齡可能重複，所以「年齡」本身不是超鍵。但是，如果我們將「年齡」和「地址」兩個屬性組合起來，就可以唯一地識別每位員工，那麼「年齡」和「地址」的組合就構成了一個超鍵。</p>
+
+<p>最大的超鍵是所有屬性的集合。例如，在員工資料表中，包含「編號」、「姓名」、「年齡」和「地址」的所有屬性組合，就構成了一個超鍵。</p>
+
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>編號</th>
+<th>姓名</th>
+<th>年齡</th>
+<th>地址</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S0001</td>
+<td>一心</td>
+<td>20</td>
+<td>高雄市三民區</td>
+</tr>
+<tr>
+<td>S0002</td>
+<td>二聖</td>
+<td>19</td>
+<td>高雄市前鎮區</td>
+</tr>
+<tr>
+<td>S0003</td>
+<td>三多</td>
+<td>23</td>
+<td>高雄市苓雅區</td>
+</tr>
+<tr>
+<td>S0004</td>
+<td>四維</td>
+<td>22</td>
+<td>高雄市鳥松區</td>
+</tr>
+<tr>
+<td>S0005</td>
+<td>五福</td>
+<td>24</td>
+<td>高雄市阿蓮區</td>
+</tr>
+</tbody>
+</table></div>
+
+<p>在上面的例子中，最大的超鍵是包含所有屬性的集合：(編號, 姓名, 年齡, 地址)。</p>
+
+<h3>2.3 主鍵 (Primary Key)（3-2-3）</h3>
+
+<p><strong>主鍵 (Primary Key)</strong> 是從超鍵中選出的最小的超鍵，用來唯一識別資料表中的每一筆記錄。它必須滿足以下條件：</p>
+
+<ul>
+<li><strong>唯一性：</strong>主鍵的值必須是唯一的，不能有重複的值。</li>
+<li><strong>不可為空值：</strong>主鍵的值不能是空值 (NULL)。</li>
+</ul>
+
+<p>在資料表中，主鍵欄位名稱下方通常會加上一個底線，以表示它是主鍵。</p>
+
+<p>舉例來說，在員工資料表中，「編號」通常被設定為主鍵，因為每個員工的編號都是唯一的，並且不能是空值。</p>
+
+<p>挑選主鍵的三原則：</p>
+<ul>
+<li><strong>固定不會再變更的值：</strong>主鍵的值應該是永久且不會變動的，例如員工編號。</li>
+<li><strong>單一欄位：</strong>主鍵通常是單一欄位，而不是多個欄位的組合。</li>
+<li><strong>不可重複或空值：</strong>主鍵的值必須是唯一的，並且不能是空值。</li>
+</ul>
+
+<p>例如，如果我們在員工資料表中，使用「身份證字號」作為主鍵，雖然每個人的身份證字號都是唯一的，但身份證字號有變更的可能性，因此不符合「固定不會再變更的值」這個原則。</p>
+<h3>2.4 補充重點</h3>
+<ul>
+
+
+
+
+
+<li>主鍵之鍵值「不可以重複」也「不可為空值」(Null Value)。 (第 23 頁)</li>
+
+</ul>
+<h2 id="g-s3">3. 鍵值屬性（二）：複合鍵、候選鍵、外鍵</h2>
+
+<h3>3.1 複合鍵(Composite Key)</h3>
+
+<p>複合鍵是指資料表中的主鍵，是由兩個或兩個以上的欄位以上所組成。當表格中某一欄位的值無法區分資料記錄時，可以使用複合鍵。例如，在「銷售記錄表」中，「編號」與「品號」的欄位值皆有重複，無法單獨用任一欄位來區分每筆記錄，因此需要將這兩個欄位組合在一起，作為主鍵。</p>
+
+<p>舉例來說，假設我們有一個銷售記錄表，單獨使用「編號」欄位無法唯一識別每一筆記錄，因為同一個員工可能銷售多種產品。將「編號」和「品號」組合起來，就能唯一確定每一筆銷售記錄。</p>
+
+<div class="table-wrap"><table>
+  <thead>
+    <tr>
+      <th>編號</th>
+      <th>品號</th>
+      <th>數量</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>S0001</td>
+      <td>P0001</td>
+      <td>88</td>
+    </tr>
+    <tr>
+      <td>S0001</td>
+      <td>P0002</td>
+      <td>55</td>
+    </tr>
+    <tr>
+      <td>S0002</td>
+      <td>P0001</td>
+      <td>77</td>
+    </tr>
+    <tr>
+      <td>S0003</td>
+      <td>P0001</td>
+      <td>88</td>
+    </tr>
+    <tr>
+      <td>S0003</td>
+      <td>P0002</td>
+      <td>99</td>
+    </tr>
+  </tbody>
+</table></div>
+
+<p>在這個例子中，(S0001, P0001) 和 (S0003, P0002) 等組合可以唯一識別每一筆銷售記錄。</p>
+
+<h3>3.2 候選鍵(Candidate Key)</h3>
+
+<p>候選鍵是指主鍵的候選人，並且也是關聯表的屬性子集所組成。候選鍵必須具備兩個條件：</p>
+<ul>
+  <li><strong>具有唯一性：</strong>是指候選鍵中的值不能重複。</li>
+  <li><strong>具有最小性：</strong>是指欄位個數要最少。</li>
+</ul>
+
+<p>例如，在員工資料表中，「編號」欄位可以作為候選主鍵，因為它具有唯一性。但是，如果「身份證字號」欄位也具有唯一性，那麼「身份證字號」也是候選主鍵。在這些候選主鍵中，我們需要選擇一個作為主鍵，其他的候選主鍵則稱為替代鍵（Alternate Key）（補充）。</p>
+
+<div class="table-wrap"><table>
+  <thead>
+    <tr>
+      <th>編號</th>
+      <th>身份證編號</th>
+      <th>姓名</th>
+      <th>年齡</th>
+      <th>地址</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>S0001</td>
+      <td>A123456789</td>
+      <td>一心</td>
+      <td>20</td>
+      <td>高雄市三民區</td>
+    </tr>
+    <tr>
+      <td>S0002</td>
+      <td>B123456789</td>
+      <td>二聖</td>
+      <td>19</td>
+      <td>高雄市前鎮區</td>
+    </tr>
+    <tr>
+      <td>S0003</td>
+      <td>C123456789</td>
+      <td>三多</td>
+      <td>23</td>
+      <td>高雄市苓雅區</td>
+    </tr>
+    <tr>
+      <td>S0004</td>
+      <td>D123456789</td>
+      <td>四維</td>
+      <td>22</td>
+      <td>高雄市鳥松區</td>
+    </tr>
+    <tr>
+      <td>S0005</td>
+      <td>E123456789</td>
+      <td>五福</td>
+      <td>24</td>
+      <td>高雄市阿蓮區</td>
+    </tr>
+  </tbody>
+</table></div>
+
+<p>在這個例子中，「編號」和「身份證字號」都是候選主鍵，因為它們都具有唯一性。但是，為了簡潔起見，我們通常選擇欄位數最少的「編號」作為主鍵。</p>
+
+<h3>3.3 外鍵(Foreign Key)</h3>
+
+<p>外鍵是指「父關聯表嵌入的鍵」，並且外鍵在父關聯表中扮演「主鍵」的角色。外鍵一定會存放另一個資料表的主鍵，主要目的是用來確定資料的參考完整性。當父關聯表的「主鍵」值不存在時，則「子關聯表」的「外鍵」值也不可能存在。</p>
+
+<p>例如，在「員工資料表」中，「部碼」欄位是外鍵，它參考「部門代碼表」中的「部碼」主鍵。這表示員工所屬的部門必須存在於部門代碼表中。如果部門代碼表中不存在某個部碼，那麼員工資料表中就不能有對應的部碼值。</p>
+
+<div class="table-wrap"><table>
+  <thead>
+    <tr>
+      <th>員工資料表</th>
+      <th>部門代碼表</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>編號</th>
+      <th>部碼</th>
+    </tr>
+    <tr>
+      <td>#1</td>
+      <td>D001</td>
+    </tr>
+    <tr>
+      <td>#2</td>
+      <td>D001</td>
+    </tr>
+    <tr>
+      <td>#3</td>
+      <td>D002</td>
+    </tr>
+    <tr>
+      <td>#4</td>
+      <td>D002</td>
+    </tr>
+    <tr>
+      <td>#5</td>
+      <td>D002</td>
+    </tr>
+  </tbody>
+  <tbody>
+    <tr>
+      <th>部碼</th>
+      <th>部碼</th>
+    </tr>
+    <tr>
+      <td>D001</td>
+      <td>生產部</td>
+    </tr>
+    <tr>
+      <td>D002</td>
+      <td>銷售部</td>
+    </tr>
+  </tbody>
+</table></div>
+
+<p>外鍵的特性包括：</p>
+<ul>
+  <li><strong>子關聯表的外鍵必須對應父關聯表的主鍵。</strong></li>
+  <li><strong>外鍵是用來建立子關聯表與父關聯表的連結關係。</strong></li>
+  <li><strong>外鍵的欄位值可以是重複值。</strong></li>
+  <li><strong>外鍵和「父關聯表」的主鍵欄位必須要具有相同定義域，亦即相同的資料型態和欄位長度，但名稱則可以不相同。</strong></li>
+</ul>
+
+<p>例如，如果部門代碼表的「部碼」欄位名稱要改為「部門代碼」，員工資料表的外鍵仍然可以參考部門代碼表中的「部門代碼」，因為重要的是值的對應關係，而不是欄位名稱。</p>
+<h2 id="g-s4">4. 關聯式資料庫的種類</h2>
+
+<p>關聯式資料庫的種類主要根據資料表之間的關係來區分，常見的有<strong>一對一 (1:1)</strong>、<strong>一對多 (1:M)</strong> 和 <strong>多對多 (M:N)</strong> 關聯。了解這些關係類型，有助於我們設計更有效率且符合需求的資料庫結構。</p>
+
+<h3>4.1 一對一關聯(1：1)（3-3-1）</h3>
+
+<p><strong>一對一關聯</strong>指的是兩個資料表中的每一筆記錄，只能對應到另一個資料表中的一筆記錄。換句話說，一個記錄在 A 表中，只能對應 B 表中的唯一一個記錄，反之亦然。這種關係較為罕見，通常發生在需要將資料分散到多個表中，但又需要保持高度關聯的情況。</p>
+
+<p><strong>為什麼使用一對一關聯？</strong> 通常是因為為了將一個實體拆分成多個表格，例如，為了避免一個表格資料過於冗長，或者為了將一些不常變動的資訊與經常變動的資訊分開儲存。</p>
+
+<p><strong>如何運作？</strong> 兩個資料表透過共同的主鍵欄位建立關聯。例如，員工資料表和考績資料表，員工編號在兩者中都是主鍵，表示每位員工都只有一份考績記錄，且每份考績記錄也只對應一位員工。</p>
+
+<p><strong>例子：</strong> 考績處理系統。假設我們需要記錄員工的個人資料和考績資訊。為了方便管理，我們可以將員工的個人資料放在「員工資料表」中，而將考績資訊放在「考績資料表」中。兩者之間透過「員工編號」建立一對一的關聯。</p>
+
+<div class="table-wrap"><table>
+  <thead>
+    <tr>
+      <th>員工資料表</th>
+      <th>考績資料表</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>編號</th>
+      <th>第一季銷量</th>
+    </tr>
+    <tr>
+      <th>姓名</th>
+      <th>第二季銷量</th>
+    </tr>
+    <tr>
+      <th>性別</th>
+      <th></th>
+    </tr>
+    <tr>
+      <th>S0001</th>
+      <th>85</th>
+    </tr>
+    <tr>
+      <th>S0002</th>
+      <th>78</th>
+    </tr>
+    <tr>
+      <th>S0003</th>
+      <th>86</th>
+    </tr>
+    <tr>
+      <th>S0004</th>
+      <th>95</th>
+    </tr>
+  </tbody>
+</table></div>
+
+<p><strong>合併範例：</strong>如果需要將兩個資料表合併，可以透過「員工編號」進行匹配，將相關資訊整合到一個表中，如下所示：</p>
+
+<div class="table-wrap"><table>
+  <thead>
+    <tr>
+      <th>編號</th>
+      <th>姓名</th>
+      <th>性別</th>
+      <th>第一季銷量</th>
+      <th>第二季銷量</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>S0001</th>
+      <th>張三</th>
+      <th>男</th>
+      <th>85</th>
+      <th>78</th>
+    </tr>
+    <tr>
+      <th>S0002</th>
+      <th>李四</th>
+      <th>男</th>
+      <th>78</th>
+      <th>52</th>
+    </tr>
+    <tr>
+      <th>S0003</th>
+      <th>王五</th>
+      <th>女</th>
+      <th>86</th>
+      <th>86</th>
+    </tr>
+    <tr>
+      <th>S0004</th>
+      <th>李安</th>
+      <th>女</th>
+      <th>95</th>
+      <th>100</th>
+    </tr>
+  </tbody>
+</table></div>
+
+<h3>4.2 一對多關聯(1：M)（3-3-2）</h3>
+
+<p><strong>一對多關聯</strong>指的是一個資料表中的一筆記錄，可以對應到另一個資料表中的多筆記錄，但另一個資料表中的每一筆記錄，只能對應到第一個資料表中的一筆記錄。這種關係是最常見的關聯類型之一。</p>
+
+<p><strong>為什麼使用一對多關聯？</strong> 通常是因為一個實體可以有多個相關的子實體。例如，一個員工可以有多筆銷售記錄。</p>
+
+<p><strong>如何運作？</strong> 父資料表（一端）的主鍵作為子資料表（多端）的外鍵，建立關聯。子資料表的外鍵指向父資料表的主鍵，表示子資料表中的記錄與父資料表中的某筆記錄相關聯。</p>
+
+<p><strong>例子：</strong> 銷售管理系統。一個員工可以有多筆銷售記錄，但每筆銷售記錄只能由一位員工負責。因此，員工資料表是父資料表，銷售記錄表是子資料表，銷售記錄表的「員工編號」欄位是外鍵，參考員工資料表的「編號」主鍵。</p>
+
+<div class="table-wrap"><table>
+  <thead>
+    <tr>
+      <th>員工資料表</th>
+      <th>銷售記錄表</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>員工編號</th>
+      <th>#</th>
+    </tr>
+    <tr>
+      <th>員工姓名</th>
+      <th>產品號碼</th>
+    </tr>
+    <tr>
+      <th>員工部門</th>
+      <th>數量</th>
+    </tr>
+    <tr>
+      <th>S0001</th>
+      <th>#1</th>
+    </tr>
+    <tr>
+      <th>S0002</th>
+      <th>P0001</th>
+    </tr>
+    <tr>
+      <th>S0003</th>
+      <th>4</th>
+    </tr>
+  </tbody>
+</table></div>
+
+<p><strong>SQL 範例：</strong></p>
+<pre><code>
+-- 建立員工資料表
+CREATE TABLE 員工資料表 (
+    編號 CHAR(5) PRIMARY KEY,
+    姓名 NVARCHAR(4) NOT NULL,
+    員工部門 CHAR(4)
+);
+
+-- 建立銷售記錄表
+CREATE TABLE 銷售記錄表 (
+    # INT PRIMARY KEY,
+    產品號碼 CHAR(4),
+    數量 INT,
+    員工編號 CHAR(5),
+    FOREIGN KEY (員工編號) REFERENCES 員工資料表(編號)
+);
+
+-- 新增員工資料
+INSERT INTO 員工資料表 (編號, 姓名, 員工部門) VALUES ('S0001', '張三', '銷售部');
+INSERT INTO 員工資料表 (編號, 姓名, 員工部門) VALUES ('S0002', '李四', '銷售部');
+
+-- 新增銷售記錄
+INSERT INTO 銷售記錄表 (#, 產品號碼, 數量, 員工編號) VALUES (1, 'P0001', 4, 'S0001');
+INSERT INTO 銷售記錄表 (#, 產品號碼, 數量, 員工編號) VALUES (2, 'P0002', 4, 'S0001');
+</code></pre>
+
+<h3>4.3 多對多關聯(M：N)（3-3-3）</h3>
+
+<p><strong>多對多關聯</strong>指的是一個資料表中的一筆記錄，可以對應到另一個資料表中的多筆記錄，反之亦然。這種關係比較複雜，通常需要借助第三個資料表（聯合資料表）來實現。</p>
+
+<p><strong>為什麼使用多對多關聯？</strong> 通常是因為一個實體可以與多個其他實體相關聯，反之亦然。例如，一個員工可以銷售多種產品，而一個產品也可以被多個員工銷售。</p>
+
+<p><strong>如何運作？</strong> 建立一個聯合資料表，該資料表包含兩個父資料表的主鍵作為外鍵。例如，在員工和產品之間建立多對多關聯，可以建立一個「銷售資料表」，該表包含「員工編號」和「產品代碼」兩個外鍵，分別參考員工資料表和產品資料表的主鍵。</p>
+
+<p><strong>例子：</strong> 產品銷售系統。一個員工可以銷售多種產品，而一個產品也可以被多個員工銷售。因此，需要建立一個銷售資料表，記錄每位員工銷售了哪些產品。</p>
+
+<div class="table-wrap"><table>
+  <thead>
+    <tr>
+      <th>員工資料表</th>
+      <th>產品資料表</th>
+      <th>銷售資料表</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>員工編號</th>
+      <th>產品號碼</th>
+      <th>員工編號</th>
+    </tr>
+    <tr>
+      <th>員工姓名</th>
+      <th>產品號稱</th>
+      <th>產品號碼</th>
+    </tr>
+    <tr>
+      <th>員工部門</th>
+      <th>定價</th>
+      <th></th>
+    </tr>
+  </tbody>
+</table></div>
+
+<p><strong>SQL 範例：</strong></p>
+<pre><code>
+-- 建立員工資料表
+CREATE TABLE 員工資料表 (
+    編號 CHAR(5) PRIMARY KEY,
+    姓名 NVARCHAR(4) NOT NULL,
+    員工部門 CHAR(4)
+);
+
+-- 建立產品資料表
+CREATE TABLE 產品資料表 (
+    產品號碼 CHAR(4) PRIMARY KEY,
+    產品號稱 NVARCHAR(4) NOT NULL,
+    定價 INT
+);
+
+-- 建立銷售資料表 (聯合資料表)
+CREATE TABLE 銷售資料表 (
+    員工編號 CHAR(5),
+    產品號碼 CHAR(4),
+    PRIMARY KEY (員工編號, 產品號碼),
+    FOREIGN KEY (員工編號) REFERENCES 員工資料表(編號),
+    FOREIGN KEY (產品號碼) REFERENCES 產品資料表(產品號碼)
+);
+
+-- 新增員工資料
+INSERT INTO 員工資料表 (編號, 姓名, 員工部門) VALUES ('S0001', '張三', '銷售部');
+
+-- 新增產品資料
+INSERT INTO 產品資料表 (產品號碼, 產品號稱, 定價) VALUES ('P0001', '筆電', 25000);
+
+-- 新增銷售記錄
+INSERT INTO 銷售資料表 (員工編號, 產品號碼) VALUES ('S0001', 'P0001');
+</code></pre>
+<h3>4.4 補充重點</h3>
+<ul>
+  
+  
+  
+  <li>多對多關聯在實務上如果只有兩個資料表來建置，難度較高，並且容易出問題。（第 53 頁）</li>
+  <li>多對多關聯的解決方法是利用「三個資料表」來建置。（第 53 頁）</li>
+  
+</ul>
+<h2 id="g-s5">5. 關聯式資料完整性規則（一）：實體完整性規則、參考完整性規則、值域完整性規則</h2>
+
+<p>關聯式資料庫的完整性規則是為了確保資料的一致性與完整性，避免資料在新增、修改及刪除等運算之後，產生異常現象。簡單來說，完整性規則就像是資料庫的「守則」，用來限制使用者輸入的資料，確保資料的品質。</p>
+
+<h3>5.1 實體完整性規則（3-4-1）</h3>
+
+<p><strong>實體完整性規則</strong>是指確保資料表中的每一筆記錄都是可區別的，也就是說，每一筆記錄都必須有唯一性。這主要透過主鍵來實現。</p>
+
+<ul>
+  <li><strong>是什麼：</strong>確保資料表中的每一筆記錄都是可區別的，避免重複的記錄。</li>
+  <li><strong>為什麼：</strong>重複的記錄會造成資料分析錯誤，影響決策的準確性。</li>
+  <li><strong>如何運作：</strong>透過主鍵來確保唯一性，主鍵的值必須是唯一的，且不能為空值。</li>
+  <li><strong>例子：</strong>在「員工資料表」中，「編號」欄位設定為主鍵，表示每位員工的編號都必須是唯一的，且不能為空值。</li>
+</ul>
+
+<p>如果主鍵允許重複或為空值，就違反了實體完整性規則，會導致資料表中的記錄無法被唯一識別。例如，如果「員工資料表」中有多筆記錄的「編號」相同，就無法區分這些員工。</p>
+
+<p><strong>複合主鍵</strong>是指由兩個或兩個以上的欄位組合起來作為主鍵。複合主鍵的每個屬性值都不能為空值。例如，在「銷售記錄表」中，如果「編號」和「品號」組合起來作為主鍵，那麼「編號」和「品號」都不能為空值。</p>
+
+<div class="table-wrap"><table>
+  <thead>
+    <tr>
+      <th>欄位</th>
+      <th>資料類型</th>
+      <th>是否允許空值</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>編號</td>
+      <td>char(5)</td>
+      <td>否 (NOT NULL)</td>
+    </tr>
+    <tr>
+      <td>品號</td>
+      <td>char(4)</td>
+      <td>否 (NOT NULL)</td>
+    </tr>
+    <tr>
+      <td>數量</td>
+      <td>INT</td>
+      <td>是 (NULL)</td>
+    </tr>
+  </tbody>
+</table></div>
+
+<p><strong>範例：</strong></p>
+
+<pre><code>-- 建立銷售記錄表
+CREATE TABLE 銷售記錄表 (
+  編號 CHAR(5) NOT NULL,
+  品號 CHAR(4) NOT NULL,
+  數量 INT,
+  PRIMARY KEY (編號, 品號)
+);
+</code></pre>
+
+<h3>5.2 參考完整性規則（3-4-2）</h3>
+
+<p><strong>參考完整性規則</strong>是指用來確保兩個資料表之間的資料一致性。當一個資料表的外鍵參考另一個資料表的主鍵時，子關聯表的外鍵值必須存在於父關聯表的主鍵中。簡單來說，就是子資料表中的外鍵值必須對應到父資料表的主鍵值。</p>
+
+<ul>
+  <li><strong>是什麼：</strong>確保子關聯表的外鍵值存在於父關聯表的主鍵中。</li>
+  <li><strong>為什麼：</strong>避免子資料表中的記錄指向不存在的父資料表記錄，確保資料的一致性。</li>
+  <li><strong>如何運作：</strong>透過外鍵與主鍵之間的關聯來實現。</li>
+  <li><strong>例子：</strong>在「員工資料表」中，「部碼」是外鍵，參考「部門代碼表」的「部碼」主鍵。因此，「員工資料表」中的「部碼」值必須存在於「部門代碼表」的「部碼」中。</li>
+</ul>
+
+<p>如果子關聯表的外鍵值不存在於父關聯表的主鍵中，就違反了參考完整性規則，會導致子資料表中的記錄指向不存在的父資料表記錄，造成資料不一致。</p>
+
+<p><strong>範例：</strong></p>
+
+<pre><code>-- 建立部門代碼表
+CREATE TABLE 部門代碼表 (
+  部碼 CHAR(4) PRIMARY KEY,
+  部碼 NVARCHAR(4) NOT NULL
+);
+
+-- 建立員工資料表
+CREATE TABLE 員工資料表 (
+  編號 CHAR(5) PRIMARY KEY,
+  姓名 NVARCHAR(4) NOT NULL,
+  部碼 CHAR(4),
+  FOREIGN KEY (部碼) REFERENCES 部門代碼表(部碼)
+);
+
+-- 插入部門代碼表資料
+INSERT INTO 部門代碼表 (部碼, 部碼) VALUES ('D001', '生產部');
+INSERT INTO 部門代碼表 (部碼, 部碼) VALUES ('D002', '銷售部');
+
+-- 插入員工資料表資料
+INSERT INTO 員工資料表 (編號, 姓名, 部碼) VALUES ('S0001', '一心', 'D001');
+INSERT INTO 員工資料表 (編號, 姓名, 部碼) VALUES ('S0002', '二聖', 'D001');
+-- 嘗試插入一個不存在的部碼
+-- INSERT INTO 員工資料表 (編號, 姓名, 部碼) VALUES ('S0003', '三多', 'D003'); -- 錯誤，D003 不存在於部門代碼表
+</code></pre>
+
+<h3>5.3 值域完整性規則（3-4-3）</h3>
+
+<p><strong>值域完整性規則</strong>是指確保資料表中的每個屬性都包含有效的值。每個屬性都有一個預定義的值域，資料只能從這個值域中選擇。 </p>
+
+<ul>
+  <li><strong>是什麼：</strong>確保資料表中的每個屬性都包含有效的值。</li>
+  <li><strong>為什麼：</strong>避免資料表中的記錄包含無效的值，確保資料的準確性。</li>
+  <li><strong>如何運作：</strong>透過設定資料類型、CHECK 條件等方式來實現。</li>
+  <li><strong>例子：</strong>在「員工資料表」中，「年齡」欄位的值必須是正整數，且在合理的範圍內（例如 18 到 65 歲）。</li>
+</ul>
+
+<p>值域完整性規則可以透過設定資料類型、CHECK 條件等方式來實現。例如，可以設定「年齡」欄位的資料類型為整數，並設定 CHECK 條件為 <code>年齡 BETWEEN 18 AND 65</code>。</p>
+
+<p><strong>範例：</strong></p>
+
+<pre><code>-- 建立員工資料表
+CREATE TABLE 員工資料表 (
+  編號 CHAR(5) PRIMARY KEY,
+  姓名 NVARCHAR(4) NOT NULL,
+  年齡 INT CHECK (年齡 BETWEEN 18 AND 65),
+  部碼 CHAR(4)
+);
+</code></pre>
+<h3>5.4 補充重點</h3>
+<ul>
+  <li><strong>資料庫管理師 (DBA)</strong>：負責定義資料庫的資料表結構，並設定限制條件。（第 61 頁）</li>
+  <li><strong>唯一鍵 (Unique Key)</strong>：是一種限制條件，確保資料表中的每個值都是唯一的，但允許空值。（第 63 頁）</li>
+  <li><strong>檢視表 (View)</strong>：是基於一個或多個資料表的虛擬資料表，不儲存資料，只定義資料的查詢方式。實體完整性規則只適用於基本關聯(Base Relation)，不考慮檢視表(View) 特性。（第 65 頁）</li>
+  <li><strong>條件約束檢查 (Check)</strong>：是一種限制條件，用來定義資料的值域，確保資料的有效性。（第 63 頁）</li>
+  <li><strong>不能空值 (Not Null)</strong>：是一種限制條件，表示欄位的值不能為空值。（第 63 頁）</li>
+  
+  
+  
+</ul>
+<h2 id="g-s6">6. 關聯式資料完整性規則（二）：空值、非空值</h2>
+
+<h3>6.1 空值(NULL Values)（3-4-4）</h3>
+
+<p>空值是指資料庫中用來表示「未知」、「不適用」或「沒有資料」的特殊記號。它與空白格或零值是完全不同的概念。例如，一位員工剛入職，部門尚未確定，此時該員工的「部碼」欄位就可以設定為空值。</p>
+
+<ul>
+  <li><strong>是什麼：</strong>空值是一種特殊的值，代表資料缺失或未知。</li>
+  <li><strong>為什麼：</strong>在某些情況下，我們無法得知資料的確切值，例如新員工尚未分配部門。</li>
+  <li><strong>如何運作：</strong>在資料庫中，空值會被視為一個獨立的值，與其他資料值區分開來。SQL 語法中，通常使用 <code>NULL</code> 關鍵字來表示空值。</li>
+  <li><strong>例子：</strong>
+    <div class="table-wrap"><table>
+      <thead>
+        <tr>
+          <th>欄位名稱</th>
+          <th>資料類型</th>
+          <th>是否 Null</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>總奖</td>
+          <td>char(5)</td>
+          <td>☐</td>
+        </tr>
+        <tr>
+          <td>姓名</td>
+          <td>nvarchar</td>
+          <td>☐</td>
+        </tr>
+        <tr>
+          <td>部碼</td>
+          <td>char(4)</td>
+          <td>☑ (代表可以為空)</td>
+        </tr>
+      </tbody>
+    </table></div>
+    <p>在上面的員工資料表中，如果一位新員工尚未分配部門，其「部碼」欄位可以設定為空值。</p>
+  </li>
+</ul>
+
+<h3>6.2 非空值(NOT NULL)（3-4-5）</h3>
+
+<p>非空值是指資料庫中資料欄位必須要有值的約束。如果某個欄位被定義為 <code>NOT NULL</code>，則在新增或更新資料時，該欄位必須提供一個有效的值，不能是空值。例如，員工的姓名是必填資訊，因此「姓名」欄位通常會被設定為 <code>NOT NULL</code>。</p>
+
+<ul>
+  <li><strong>是什麼：</strong><code>NOT NULL</code> 是一種約束，確保資料欄位必須包含有效的值。</li>
+  <li><strong>為什麼：</strong>某些資料欄位對於記錄的完整性至關重要，例如姓名、編號等，不能允許其值為空。</li>
+  <li><strong>如何運作：</strong>在建立資料表時，可以使用 <code>NOT NULL</code> 關鍵字來定義欄位。如果嘗試在 <code>NOT NULL</code> 欄位中插入空值，資料庫會拋出錯誤，交易會中止。</li>
+  <li><strong>例子：</strong>
+    <div class="table-wrap"><table>
+      <thead>
+        <tr>
+          <th>運行行名稱</th>
+          <th>資料類型</th>
+          <th>允許 Null</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>編號</td>
+          <td>char(5)</td>
+          <td>□</td>
+        </tr>
+        <tr>
+          <td>姓名</td>
+          <td>nvarchar(4)</td>
+          <td>□</td>
+        </tr>
+        <tr>
+          <td>部碼</td>
+          <td>char(4)</td>
+          <td>☒</td>
+        </tr>
+      </tbody>
+    </table></div>
+    <p>在上面的員工資料表中，「部碼」欄位被設定為 <code>NOT NULL</code>，表示每個員工都必須有部門資訊。</p>
+  </li>
+</ul>
+
+<p>總結來說，空值和非空值是資料庫完整性管理中兩個重要的概念。合理使用空值可以處理資料缺失的情況，而設定 <code>NOT NULL</code> 則可以確保關鍵資料欄位的完整性。</p>
+<h3>6.3 補充重點</h3>
+
+<ul>
+  <li>資料行必須有正確的資料值，不可為虛值（第 77 頁）。</li>
+  <li>在「員工資料表」中的「姓名」欄位值必須確定，不可為虛值，因此在建立資料表時就必須宣告為NOT NULL（第 77 頁）。</li>
+  
+  
+  
+</ul>
+</section>
+<section class="terminology">
+  <h2 id="g-s7">📖 專有名詞庫</h2>
+  <dl class="terms">
+    <dt>屬性<span class="en">Attribute</span></dt>
+    <dd>用來描述實體的性質 (Property)。</dd>
+    
+    <dt>超鍵</dt>
+    <dd>在一個資料表中，選出兩個或兩個以上的欄位組合起來，以作為唯一識別資料的欄位。</dd>
+    <dt>主鍵</dt>
+    <dd>用來識別記錄的唯一性，不可重複及空值。最小的「超鍵」則是關聯的主鍵。</dd>
+    <dt>候選鍵</dt>
+    <dd>從資料表中選擇一個具有「唯一性」的鍵，稱為主鍵的候選人。</dd>
+    <dt>複合鍵</dt>
+    <dd>是在資料表中，由兩個或兩個欄位以上所組成，這種主鍵稱為複合鍵。</dd>
+    <dt>外鍵</dt>
+    <dd>用來建立資料表之間的關係，外鍵內含值必須與另一個資料表的主鍵相同。</dd>
+    <dt>一對一關聯</dt>
+    <dd>表示「員工資料表」中的每一筆記錄，只能對應到「考績資料表」的一筆記錄，反之亦然。</dd>
+    <dt>一對多關聯</dt>
+    <dd>表示「員工資料表」中的每一筆記錄，可以對應到「銷售記錄表」中的多筆記錄。</dd>
+    <dt>多對多關聯</dt>
+    <dd>表示「員工資料表」中的每一筆記錄，可以對應到「產品資料表」中的多筆記錄，並且「產品資料表」中的每一筆記錄，也能夠對應到「員工資料表」中的多筆記錄。</dd>
+    <dt>實體完整性規則</dt>
+    <dd>用來確保資料的完整性，主鍵值未知代表是一個不確定的實體，不能存放在資料表中。</dd>
+    <dt>參考完整性規則</dt>
+    <dd>用來確保兩個資料表之間的資料一致性，子關聯表的外鍵的資料欄位值，一定要存在於父關聯表的主鍵中的資料欄位值。</dd>
+    <dt>值域完整性規則</dt>
+    <dd>用來確保「單一資料表」中，對於所有屬性的內含值，必須來自值域的合法值群中。</dd>
+    <dt>空值</dt>
+    <dd>是一種特殊記號，用以記錄目前不詳的資料值。</dd>
+    <dt>非空值</dt>
+    <dd>資料行必須有正確的資料值，不可為虛值。</dd>
+    <dt>關聯式資料庫</dt>
+    <dd>由兩個或兩個以上的資料表組合而成，資料表之間是透過相同的欄位值來連結。</dd>
+    <dt>資料定義語言</dt>
+    <dd>撰寫SQL指令來建立兩個資料表。</dd>
+    <dt>鍵值屬性</dt>
+    <dd>是指由一個或一個以上的屬性所組成，並且在一個關聯中，必須要具有「唯一性」的屬性來當作「鍵」。</dd>
+    <dt>簡單屬性</dt>
+    <dd>已經無法再繼續切割成其他有意義的單位。</dd>
+    <dt>複合屬性</dt>
+    <dd>由兩個或兩個以上的其他屬性的值所組成。</dd>
+    <dt>衍生屬性</dt>
+    <dd>可以經由某種方式的計算或推論而獲得的。</dd>
+    <dt>完整性規則</dt>
+    <dd>是來確保資料的一致性與完整性，以避免資料在經過新增、修改及刪除等運算之後，而產生的異常現象。</dd>
+    <dt>資料庫管理師</dt>
+    <dd>設定資料庫的限制條件。</dd>
+    <dt>唯一鍵</dt>
+    <dd>具有唯一性。</dd>
+    
+    
+    <dt>值域</dt>
+    <dd>必須來自值域的合法值群中。</dd>
+  </dl>
+</section>
+
+<section class="self-test">
+  <h2 id="g-s8">📝 複習測驗</h2>
+  <div class="quiz">
+    <div class="q">
+      <p class="q-head">下列哪一項描述最符合「超鍵」的定義？</p><ul><li>(A) 在一個資料表中，選出兩個或兩個以上的欄位組合起來，以作為唯一識別資料的欄位</li><li>(B) 只能由單一欄位構成，用於唯一識別資料表中的每一筆記錄。</li><li>(C) 必須是資料表中的所有欄位的組合。</li><li>(D) 是一種可選的資料表屬性，用於提高資料查詢效率。</li></ul>
+      <p class="q-hint">提示：思考超鍵的特性與候選鍵的關係。</p>
+      <details>
+        <summary>展開參考答案</summary>
+        <div class="answer">
+          <p><b>正確答案：</b>(A) 在一個資料表中，選出兩個或兩個以上的欄位組合起來，以作為唯一識別資料的欄位。</p>
+          <p><b>解析：</b>超鍵是包含唯一性的屬性集合，候選鍵是符合最小性的超鍵，主鍵是從候選鍵中選出的。（補充：超鍵的最小性是指移除任何一個欄位，其唯一性就不成立）</p>
+          <p><b>其他選項錯誤說明：</b>
+            </p><ul>
+              <li>(B) 只能由單一欄位構成，用於唯一識別資料表中的每一筆記錄。 (錯誤：超鍵可以由單一或多個欄位構成)</li>
+              <li>(C) 必須是資料表中的所有欄位的組合。 (錯誤：超鍵只需要包含唯一性即可，不一定是所有欄位)</li>
+              <li>(D) 是一種可選的資料表屬性，用於提高資料查詢效率。 (錯誤：超鍵是資料表設計的基礎概念，與查詢效率無關)</li>
+            </ul>
+          <p></p>
+        </div>
+      </details>
+    </div>
+
+    <div class="q">
+      <p class="q-head">關於「主鍵」的敘述，下列哪一項是正確的？</p><ul><li>(A) 可以是資料表中的任何欄位，只要該欄位包含資料即可。</li><li>(B) 主鍵必須具有唯一性，且不可重複或為空值</li><li>(C) 可以與其他欄位共用相同的值，以提高資料儲存效率。</li><li>(D) 必須是一個複合鍵，由兩個或兩個以上的欄位組成。</li></ul>
+      <details>
+        <summary>展開參考答案</summary>
+        <div class="answer">
+          <p><b>正確答案：</b>(B) 主鍵必須具有唯一性，且不可重複或為空值。</p>
+          <p><b>解析：</b>主鍵用於唯一識別記錄，因此必須滿足唯一性、不可重複、不可為空值的條件。（補充：主鍵的唯一性是資料完整性的重要保障）</p>
+          <p><b>其他選項錯誤說明：</b>
+            </p><ul>
+              <li>(A) 可以是資料表中的任何欄位，只要該欄位包含資料即可。 (錯誤：主鍵必須滿足唯一性、不可重複、不可為空值的條件)</li>
+              <li>(C) 可以與其他欄位共用相同的值，以提高資料儲存效率。 (錯誤：主鍵的值必須是唯一的)</li>
+              <li>(D) 必須是一個複合鍵，由兩個或兩個以上的欄位組成。 (錯誤：主鍵可以是單一或複合鍵)</li>
+            </ul>
+          <p></p>
+        </div>
+      </details>
+    </div>
+
+    <div class="q">
+      <p class="q-head">在關聯式資料庫中，如果「員工資料表」與「考績資料表」之間呈現一對一的關聯，代表什麼？</p>
+      <details>
+        <summary>展開參考答案</summary>
+        <div class="answer">
+          <p><b>正確答案：</b>表示「員工資料表」中的每一筆記錄，只能對應到「考績資料表」的一筆記錄，反之亦然。</p>
+          <p><b>解析：</b>一對一關聯表示兩個表格中的記錄之間存在著對應關係，每筆記錄都只有一筆對應的記錄。</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="q">
+      <p class="q-head">下列哪個選項是「參考完整性規則」的主要目的？</p><ul><li>(A) 確保兩個資料表之間的資料一致性</li><li>(B) 用於加速資料查詢，提高資料庫的效能。</li><li>(C) 用於限制資料表的欄位數量，避免資料表過於龐大。</li><li>(D) 用於加密資料表中的敏感資訊，防止未經授權的存取。</li></ul>
+      <details>
+        <summary>展開參考答案</summary>
+        <div class="answer">
+          <p><b>正確答案：</b>(A) 確保兩個資料表之間的資料一致性。</p>
+          <p><b>解析：</b>參考完整性規則透過外鍵與主鍵的關聯，確保子關聯表中的外鍵值存在於父關聯表的主鍵中，維持資料的一致性。（補充：參考完整性規則是資料庫設計中非常重要的概念，有助於防止資料不一致的情況發生）</p>
+          <p><b>其他選項錯誤說明：</b>
+            </p><ul>
+              <li>(B) 用於加速資料查詢，提高資料庫的效能。 (錯誤：參考完整性規則主要關注資料的一致性，與查詢效能無直接關係)</li>
+              <li>(C) 用於限制資料表的欄位數量，避免資料表過於龐大。 (錯誤：參考完整性規則與資料表欄位的數量無關)</li>
+              <li>(D) 用於加密資料表中的敏感資訊，防止未經授權的存取。 (錯誤：參考完整性規則與資料加密無關)</li>
+            </ul>
+          <p></p>
+        </div>
+      </details>
+    </div>
+
+    <div class="q">
+      <p class="q-head">「值域完整性規則」主要用於確保什麼？</p>
+      <details>
+        <summary>展開參考答案</summary>
+        <div class="answer">
+          <p><b>正確答案：</b>確保資料表中的屬性值來自合法的值群。</p>
+          <p><b>解析：</b>值域完整性規則限制資料表中的屬性值必須在預先定義的合法範圍內，以確保資料的準確性。</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="q">
+      <p class="q-head">在設計資料庫時，為什麼需要考慮「非空值」的限制？</p>
+      <details>
+        <summary>展開參考答案</summary>
+        <div class="answer">
+          <p><b>正確答案：</b>避免資料表中出現不完整的記錄。</p>
+          <p><b>解析：</b>設定欄位為非空值，可以確保該欄位必須要有值，避免資料表中出現缺少必要資訊的記錄。</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="q">
+      <p class="q-head">如果「員工資料表」的「部碼」欄位是外鍵，它參考了哪個資料表的哪個欄位？</p>
+      <details>
+        <summary>展開參考答案</summary>
+        <div class="answer">
+          <p><b>正確答案：</b>參考「部門代碼表」的「部碼」欄位。</p>
+          <p><b>解析：</b>外鍵指向父關聯表的主鍵，因此「員工資料表」的「部碼」外鍵參考「部門代碼表」的主鍵「部碼」。</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="q">
+      <p class="q-head">下列哪一項描述最能解釋「複合鍵」？</p><ul><li>(A) 是一個只能由單一欄位構成的主鍵。</li><li>(B) 是一種用於加速資料查詢的索引。</li><li>(C) 由兩個或兩個以上的欄位組合而成的主鍵</li><li>(D) 是一種用於限制資料表欄位數量的規則。</li></ul>
+      <details>
+        <summary>展開參考答案</summary>
+        <div class="answer">
+          <p><b>正確答案：</b>(C) 由兩個或兩個以上的欄位組合而成的主鍵。</p>
+          <p><b>解析：</b>複合鍵是為了在單一欄位無法唯一識別記錄時，使用多個欄位組合來作為主鍵。（補充：複合鍵的欄位可以是不同資料型態）</p>
+          <p><b>其他選項錯誤說明：</b>
+            </p><ul>
+              <li>(A) 是一個只能由單一欄位構成的主鍵。 (錯誤：複合鍵必須由多個欄位組成)</li>
+              <li>(B) 是一種用於加速資料查詢的索引。 (錯誤：複合鍵是主鍵，與索引不同)</li>
+              <li>(D) 是一種用於限制資料表欄位數量的規則。 (錯誤：複合鍵與欄位數量無關)</li>
+            </ul>
+          <p></p>
+        </div>
+      </details>
+    </div>
+
+    <div class="q">
+      <p class="q-head">在建立關聯式資料庫時，資料庫管理師(DBA) 的主要職責是什麼？</p>
+      <details>
+        <summary>展開參考答案</summary>
+        <div class="answer">
+          <p><b>正確答案：</b>設定資料表的限制條件。</p>
+          <p><b>解析：</b>資料庫管理師負責定義資料表的結構、資料類型、限制條件等，以確保資料的完整性和一致性。</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="q">
+      <p class="q-head">下列關於「衍生屬性」的敘述，哪一項是正確的？</p><ul><li>(A) 可以經由某種方式的計算或推論而獲得的</li><li>(B) 必須直接儲存在資料表中的欄位中。</li><li>(C) 是一種用於唯一識別資料表的欄位。</li><li>(D) 是一種用於限制資料輸入的規則。</li></ul>
+      <details>
+        <summary>展開參考答案</summary>
+        <div class="answer">
+          <p><b>正確答案：</b>(A) 可以經由某種方式的計算或推論而獲得的。</p>
+          <p><b>解析：</b>衍生屬性不是直接儲存在資料表中的，而是透過計算或其他方式從其他屬性推導出來的。（補充：衍生屬性可以提高資料查詢的效率，因為不需要每次都重新計算）</p>
+          <p><b>其他選項錯誤說明：</b>
+            </p><ul>
+              <li>(B) 必須直接儲存在資料表中的欄位中。 (錯誤：衍生屬性是從其他屬性推導出來的)</li>
+              <li>(C) 是一種用於唯一識別資料表的欄位。 (錯誤：衍生屬性不是主鍵或超鍵)</li>
+              <li>(D) 是一種用於限制資料輸入的規則。 (錯誤：衍生屬性與資料輸入規則無關)</li>
+            </ul>
+          <p></p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+</article>
+</main>
+<footer><div class="container">OmniDoc 知識煉金庫 · 資料庫系統 · 由本機 AI（gemma3:12b）依 CLAUDE.md 規則生成並經人工校對 · <a class="back-top" href="../../index.html#library">← 回筆記庫</a></div></footer>
+<script>(function(){var o=[];addEventListener('beforeprint',function(){o=[];document.querySelectorAll('details').forEach(function(d){if(!d.open){d.open=true;o.push(d)}})});addEventListener('afterprint',function(){o.forEach(function(d){d.open=false})})})();</script>
+<script>
+// 互動測驗：點選項立刻顯示對錯並展開參考答案
+(function () {
+  function label(el) { var m = el.textContent.match(/^\s*\(([A-D])\)/); return m ? m[1] : null; }
+  document.querySelectorAll('.q').forEach(function (q) {
+    var ul = Array.prototype.filter.call(q.children, function (c) { return c.tagName === 'UL' && label(c.firstElementChild || c); })[0];
+    var d = q.querySelector('details');
+    var m = d && d.textContent.match(/答案\s*[:：]?\s*[(（]?\s*([A-D])/);
+    if (!ul || !m) return;
+    q.classList.add('mc');
+    Array.prototype.forEach.call(ul.children, function (li) {
+      var l = label(li);
+      if (!l) return;
+      li.tabIndex = 0;
+      function pick() {
+        if (q.classList.contains('done')) return;
+        q.classList.add('done', l === m[1] ? 'ok' : 'bad');
+        li.classList.add('picked');
+        if (l !== m[1]) li.classList.add('wrong');
+        Array.prototype.forEach.call(ul.children, function (x) { if (label(x) === m[1]) x.classList.add('correct'); });
+        d.open = true;
+      }
+      li.addEventListener('click', pick);
+      li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+    });
+  });
+})();
+</script>
+<!-- 已登記到首頁卡片：index.html → data-id="pub-database-ch03"（依 CLAUDE.md 第 6、7 節） -->
+</body>
+</html>
