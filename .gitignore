@@ -1,0 +1,9 @@
+# 本機 AI 連線設定（含 Mac mini 位址），只留在自己電腦，不上傳
+config.local.js
+
+# 系統與編輯器產生的檔案
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.claude/
